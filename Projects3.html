@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار سرعة الكتابة السريعة - كلمات عشوائية</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 650px;
+            width: 90%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        p.note {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .stat-box {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .stat-box span {
+            color: #2980b9;
+            display: block;
+            font-size: 1.5rem;
+        }
+        .text-display {
+            font-size: 1.4rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: right;
+            user-select: none;
+            word-wrap: break-word;
+        }
+        .correct { color: #27ae60; }
+        .incorrect { color: #c0392b; background-color: #fde8e8; }
+        .current { border-bottom: 3px solid #2980b9; }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: right;
+        }
+        .input-field:focus {
+            border-color: #2980b9;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #219653;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>اختبار سرعة الكتابة باللغة العربية</h1>
+    <p class="note">ملاحظة: الكلمات عشوائية ومصممة بدون همزات (ا) تماماً لتسريع الكتابة.</p>
+    
+    <div class="stats-container">
+        <div class="stat-box">الوقت المتبقي: <span id="timer">60</span> ثانية</div>
+        <div class="stat-box">الكلمات/الدقيقة: <span id="wpm">0</span></div>
+        <div class="stat-box">الدقة: <span id="accuracy">100</span>%</div>
+    </div>
+
+    <div class="text-display" id="textDisplay"></div>
+    
+    <input type="text" class="input-field" id="inputField" placeholder="ابدأ الكتابة هنا لتشغيل المؤقت..." autofocus autocomplete="off">
+    
+    <button id="restartBtn">إعادة المحاولة</button>
+</div>
+
+<script>
+    // قاموس كلمات ضخم وعشوائي بدون أي همزات (تم استبدال أ إ آ بـ ا)
+    const wordsBank = [
+        "العمل", "النجاح", "الكتابة", "المستقبل", "التحدي", "الهدف", "الحياة", "العقل", "العلم", "المعرفة",
+        "الطريق", "الانسان", "السرعة", "التطوير", "البرمجة", "الكمبيوتر", "التعليم", "الرياضة", "الصحة", "الوقت",
+        "الارادة", "الامل", "العمل المشترك", "التفكير", "الابداع", "المهارة", "التدريب", "الاستمرار", "الصبر", "التركيز",
+        "كتاب", "مدرسة", "جامعة", "دراسة", "فهم", "قراءة", "تجربة", "خطوة", "فكرة", "مشروع",
+        "عالم", "ارض", "سماء", "نجم", "قمر", "شمس", "بحر", "نهر", "جبل", "سفر",
+        "يوم", "اسبوع", "شهر", "سنة", "ساعة", "دقيقة", "ثانية", "فجر", "صباح", "مساء",
+        "كبير", "صغير", "سريع", "بطيء", "قوي", "ضعيف", "سهل", "صعب", "ممتاز", "رائع",
+        "جديد", "قديم", "جميل", "واضح", "خفي", "قريب", "بعيد", "داخل", "خارج", "بين",
+        "تحت", "فوق", "يمين", "يسار", "امام", "خلف", "حول", "مع", "من", "الى",
+        "في", "على", "حتى", "لكن", "تلك", "هذا", "هذه", "الذين", "التي", "الذي",
+        "يمشي", "يركض", "يكتب", "يقرأ", "يفكر", "يتعلم", "يصنع", "يبني", "يغير", "يساعد"
+    ];
+
+    let timer = 60;
+    let maxTime = 60;
+    let timerInterval = null;
+    let isTyping = false;
+    let currentParagraph = "";
+    let totalCharacters = 0;
+    let errors = 0;
+
+    const textDisplay = document.getElementById('textDisplay');
+    const inputField = document.getElementById('inputField');
+    const timerElement = document.getElementById('timer');
+    const wpmElement = document.getElementById('wpm');
+    const accuracyElement = document.getElementById('accuracy');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // دالة لتوليد نص عشوائي من الكلمات
+    function generateRandomParagraph(wordCount = 45) {
+        let selectedWords = [];
+        for (let i = 0; i < wordCount; i++) {
+            const randomIndex = Math.floor(Math.random() * wordsBank.length);
+            selectedWords.push(wordsBank[randomIndex]);
+        }
+        return selectedWords.join(" ");
+    }
+
+    // إعداد الاختبار من جديد
+    function initTest() {
+        clearInterval(timerInterval);
+        timer = maxTime;
+        isTyping = false;
+        errors = 0;
+        totalCharacters = 0;
+        
+        timerElement.innerText = timer;
+        wpmElement.innerText = 0;
+        accuracyElement.innerText = 100;
+        inputField.value = "";
+        inputField.disabled = false;
+
+        // توليد النص العشوائي الجديد
+        currentParagraph = generateRandomParagraph();
+        
+        // تفكيك النص إلى حروف داخل span
+        textDisplay.innerHTML = "";
+        currentParagraph.split("").forEach((char, index) => {
+            const span = document.createElement('span');
+            span.innerText = char;
+            if(index === 0) span.classList.add('current');
+            textDisplay.appendChild(span);
+        });
+    }
+
+    // بدء المؤقت
+    function startTimer() {
+        isTyping = true;
+        timerInterval = setInterval(() => {
+            if (timer > 0) {
+                timer--;
+                timerElement.innerText = timer;
+                
+                let timeElapsed = maxTime - timer;
+                let wpm = Math.round((totalCharacters / 5) / (timeElapsed / 60));
+                wpmElement.innerText = wpm >= 0 && wpm !== Infinity ? wpm : 0;
+            } else {
+                endTest();
+            }
+        }, 1000);
+    }
+
+    // نهاية الاختبار
+    function endTest() {
+        clearInterval(timerInterval);
+        inputField.disabled = true;
+        inputField.value = "انتهى الوقت! اضغط اعادة المحاولة للاختبار مجدداً.";
+    }
+
+    // مراقبة كتابة المستخدم
+    inputField.addEventListener('input', () => {
+        if (!isTyping && inputField.value.length > 0) {
+            startTimer();
+        }
+
+        const charactersSpans = textDisplay.querySelectorAll('span');
+        const insertedText = inputField.value.split('');
+        
+        totalCharacters = insertedText.length;
+        errors = 0;
+
+        charactersSpans.forEach((charSpan, index) => {
+            const character = insertedText[index];
+            
+            charSpan.classList.remove('correct', 'incorrect', 'current');
+
+            if (character == null) {
+                if(index === insertedText.length) {
+                    charSpan.classList.add('current');
+                }
+            } else if (character === charSpan.innerText) {
+                charSpan.classList.add('correct');
+            } else {
+                charSpan.classList.add('incorrect');
+                errors++;
+            }
+        });
+
+        if (totalCharacters > 0) {
+            let accuracy = Math.round(((totalCharacters - errors) / totalCharacters) * 100);
+            accuracyElement.innerText = accuracy < 0 ? 0 : accuracy;
+        }
+
+        if (insertedText.length >= charactersSpans.length) {
+            endTest();
+        }
+    });
+
+    restartBtn.addEventListener('click', initTest);
+
+    // تشغيل عند تحميل الصفحة
+    initTest();
+</script>
+
+</body>
+</html>
